@@ -24,4 +24,15 @@ class GrapherDB
         }
         return $labels;
     }
+
+    public function getdataassociatedwithlabels()
+    {
+        $data = array();
+        $query = "SELECT `axis-x`.name, `data`.value FROM `axis-x` INNER JOIN `data` ON `axis-x`.name = `data`.axis_x_value";
+        $result = $this->connection->query($query);
+        while ($row = $result->fetch_assoc()) {
+            $data[$row['name']][] = $row['value'];
+        }
+        return $data;
+    }
 }
