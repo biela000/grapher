@@ -51,6 +51,7 @@ class Grapher
 
     private function drawaxes()
     {
+        // X axis
         $this->drawline(
             $this->safe_space["start_x"],
             $this->safe_space["start_y"],
@@ -58,6 +59,8 @@ class Grapher
             $this->safe_space["start_y"],
             $this->colors['black']
         );
+
+        // Y axis
         $this->drawline(
             $this->safe_space["start_x"],
             $this->safe_space["start_y"],
