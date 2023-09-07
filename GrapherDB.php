@@ -13,4 +13,15 @@ class GrapherDB
     {
         $this->connection->close();
     }
+
+    public function getlabels()
+    {
+        $labels = array();
+        $query = "SELECT name FROM `axis-x`";
+        $result = $this->connection->query($query);
+        while ($row = $result->fetch_assoc()) {
+            $labels[] = $row['name'];
+        }
+        return $labels;
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+require_once 'GrapherDB.php';
+
 class Grapher
 {
     private $image_width;
@@ -11,9 +13,12 @@ class Grapher
     private $safe_space = array();
     private $safe_image_width;
     private $safe_image_height;
+    private $database = null;
 
     public function __construct($image_width, $image_height)
     {
+        $this->database = new GrapherDB();
+
         $this->image_width = $image_width;
         $this->image_height = $image_height;
 
