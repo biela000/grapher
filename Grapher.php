@@ -266,11 +266,20 @@ class Grapher
         foreach ($this->labels as $label)
         {
             $value = isset($this->data[$label]) ? $this->data[$label] : [];
+
             if (count($value) > 0)
-            {
-                $this->drawdatapoint($label, $value[0]);
-            }
+                $this->decidedatapointtype($label, $value[0]);
+            else
+                $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["grey"]);
         }
+    }
+
+    private function decidedatapointtype($label, $value)
+    {
+        if ($value == -1)
+            $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["red"]);
+        else
+            $this->drawdatapoint($label, $value);
     }
 
     private function drawdatapoint($label, $value)
@@ -281,7 +290,19 @@ class Grapher
             $this->safe_space["start_y"] - $this->getvalueposition($value),
             $this::DOT_SIZE,
             $this::DOT_SIZE,
-            $this->colors["red"]
+            $this->colors["blue"]
+        );
+    }
+
+    private function drawspecialdatapoint($label, $pos_y, $color)
+    {
+        imagefilledellipse(
+            $this->image,
+            $this->safe_space["start_x"] + $this->getlabelposition($label),
+            $pos_y,
+            $this::DOT_SIZE,
+            $this::DOT_SIZE,
+            $color
         );
     }
 
