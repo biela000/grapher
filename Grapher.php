@@ -20,27 +20,40 @@ class Grapher
     private $database = null;
     private $labels = array();
     private $data = array();
+    private $distance_between_axisx_labels;
+    private $distance_between_axisy_labels;
+    private $axisy_upper_limit;
+    private $axisy_bottom_limit;
+    private $axsiy_step;
 
     public function __construct($image_width, $image_height)
     {
-        $this->database = new GrapherDB();
+        $this->initdatabase();
 
-        $this->image_width = $image_width;
-        $this->image_height = $image_height;
+        $this->setdimensions($image_width, $image_height);
 
         $this->definesafespace();
 
-        $this->image = imagecreatetruecolor($image_width, $image_height);
+        $this->createimage();
 
         $this->allocatecolors();
-        imagefill($this->image, 0, 0, $this->colors['white']);
-        $this->drawaxes();
 
-        $this->fetchgraphdata();
+        $this->draw();
+    }
 
-        $this->drawlabels();
+    private function initdatabase()
+    {
+        $this->database = new GrapherDB();
+    }
 
-        $this->drawdatapoints();
+    private function setdimensions($image_width, $image_height)
+    {
+        $this->image_width = $image_width;
+        $this->image_height = $image_height;
+    }
+    private function createimage()
+    {
+        $this->image = imagecreatetruecolor($this->image_width, $this->image_height);
     }
 
     private function definesafespace()
@@ -66,24 +79,49 @@ class Grapher
         );
     }
 
+    private function draw()
+    {
+        $this->drawbackground($this->colors["white"]);
+
+        $this->drawaxes();
+
+        $this->fetchgraphdata();
+
+        $this->drawlabelswithgrid();
+
+        $this->drawdatapoints();
+    }
+
+    private function drawbackground($background_color)
+    {
+        imagefill($this->image, 0, 0, $background_color);
+    }
+
     private function drawaxes()
     {
-        // X axis
+        $this->drawaxisx();
+        $this->drawaxisy();
+    }
+
+    private function drawaxisx()
+    {
         $this->drawline(
             $this->safe_space["start_x"],
             $this->safe_space["start_y"],
             $this->safe_space["end_x"],
             $this->safe_space["start_y"],
-            $this->colors['black']
+            $this->colors["black"]
         );
+    }
 
-        // Y axis
+    private function drawaxisy()
+    {
         $this->drawline(
             $this->safe_space["start_x"],
-            $this->safe_space["start_y"],
-            $this->safe_space["start_x"],
             $this->safe_space["end_y"],
-            $this->colors['black']
+            $this->safe_space["start_x"],
+            $this->safe_space["start_y"],
+            $this->colors["black"]
         );
     }
 
@@ -98,18 +136,16 @@ class Grapher
         $this->data = $this->database->getdataassociatedwithlabels();
     }
 
-    private function drawlabels()
+    private function drawlabelswithgrid()
     {
+        imagesetthickness($this->image, 1);
         $this->drawxaxislabels();
         $this->drawyaxislabels();
     }
 
     private function drawxaxislabels()
     {
-        $distance_between_labels = $this->safe_image_width / count($this->labels);
-
-        $x = $this->safe_space["start_x"] + $distance_between_labels;
-        $y = $this->safe_space["start_y"] + 2 * $this::LABEL_FONT_SIZE;
+        extract($this->calculatexaxisproperties());
 
         foreach ($this->labels as $value) {
             $this->drawlabel(
@@ -130,23 +166,25 @@ class Grapher
                 $this::DOT_SIZE
             );
 
-            $x += $distance_between_labels;
+            $x += $this->distance_between_axisx_labels;
         }
+    }
+
+    private function calculatexaxisproperties()
+    {
+        $this->distance_between_axisx_labels = $this->safe_image_width / count($this->labels);
+
+        return array(
+            "x" => $this->safe_space["start_x"] + $this->distance_between_axisx_labels,
+            "y" => $this->safe_space["start_y"] + 2 * $this::LABEL_FONT_SIZE
+        );
     }
 
     private function drawyaxislabels()
     {
-        $upper_limit = doubleval(ceil(max(array_map("max", $this->data))) / 10 * 10);
-        $bottom_limit = doubleval(ceil(min(array_map("min", $this->data))) / 10 * 10);
+        extract($this->calculateaxisyproperties());
 
-        $distance_between_labels = $this->safe_image_height / $this::Y_AXIS_LABEL_COUNT;
-
-        $x = $this->safe_space["start_x"] - 10 * $this::LABEL_FONT_SIZE;
-        $y = $this->safe_space["start_y"] - $distance_between_labels;
-
-        $step = ($upper_limit - $bottom_limit) / ($this::Y_AXIS_LABEL_COUNT - 1);
-
-        for ($i = $bottom_limit; $i < $upper_limit + $step; $i += $step) {
+        for ($i = $this->axisy_bottom_limit; $i < $this->axisy_upper_limit + $this->axsiy_step; $i += $this->axsiy_step) {
             $this->drawlabel(
                 $x,
                 $y - $this::LABEL_FONT_SIZE,
@@ -165,8 +203,23 @@ class Grapher
                 $this::DOT_SIZE
             );
 
-            $y -= $distance_between_labels;
+            $y -= $this->distance_between_axisy_labels;
         }
+    }
+
+    private function calculateaxisyproperties()
+    {
+        $this->axisy_upper_limit = doubleval(ceil(max(array_map("max", $this->data))) / 10 * 10);
+        $this->axisy_bottom_limit = doubleval(ceil(min(array_map("min", $this->data))) / 10 * 10);
+
+        $this->axsiy_step = ($this->axisy_upper_limit - $this->axisy_bottom_limit) / ($this::Y_AXIS_LABEL_COUNT - 1);
+
+        $this->distance_between_axisy_labels = $this->safe_image_height / $this::Y_AXIS_LABEL_COUNT;
+
+        return array(
+            "x" => $this->safe_space["start_x"] - 10 * $this::LABEL_FONT_SIZE,
+            "y" => $this->safe_space["start_y"] - $this->distance_between_axisy_labels,
+        );
     }
 
     private function drawlabel($label_x, $label_y, $start_x, $start_y, $end_x, $end_y, $value)
@@ -222,7 +275,7 @@ class Grapher
 
     private function drawdatapoint($label, $value)
     {
-        imageellipse(
+        imagefilledellipse(
             $this->image,
             $this->safe_space["start_x"] + $this->getlabelposition($label),
             $this->safe_space["start_y"] - $this->getvalueposition($value),
@@ -234,18 +287,13 @@ class Grapher
 
     private function getlabelposition($label)
     {
-        $distance_between_labels = $this->safe_image_width / count($this->labels);
         $label_position = array_search($label, $this->labels);
-        return $distance_between_labels * ($label_position + 1);
+        return $this->distance_between_axisx_labels * ($label_position + 1);
     }
 
     private function getvalueposition($value)
     {
-        $upper_limit = doubleval(ceil(max(array_map("max", $this->data))) / 10 * 10);
-        $bottom_limit = doubleval(ceil(min(array_map("min", $this->data))) / 10 * 10);
-        $distance_between_labels = $this->safe_image_height / $this::Y_AXIS_LABEL_COUNT;
-        $step = ($upper_limit - $bottom_limit) / ($this::Y_AXIS_LABEL_COUNT - 1);
-        return $distance_between_labels * (abs($bottom_limit - $value) / $step + 1);
+        return $this->distance_between_axisy_labels * (abs($this->axisy_bottom_limit - $value) / $this->axsiy_step + 1);
     }
 
     public function getimage()
