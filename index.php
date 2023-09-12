@@ -2,7 +2,11 @@
 
 require_once 'Grapher.php';
 
-header('Content-Type: image/png');
+if (isset($_GET['debug']) && $_GET['debug'] == 'true') {
+    ini_set('display_errors', 1);
+} else {
+    header('Content-Type: image/png');
+}
 
 $image_width = isset($_GET['width']) ? intval($_GET['width']) : 1000;
 $image_height = isset($_GET['height']) ? intval($_GET['height']) : 300;
