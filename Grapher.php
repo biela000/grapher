@@ -288,8 +288,8 @@ class Grapher
             $this->image,
             $this->safe_space["start_x"] + $this->getlabelposition($label),
             $this->safe_space["start_y"] - $this->getvalueposition($value),
-            $this::DOT_SIZE,
-            $this::DOT_SIZE,
+            2 * $this::DOT_SIZE,
+            2 * $this::DOT_SIZE,
             $this->colors["blue"]
         );
     }
@@ -300,8 +300,8 @@ class Grapher
             $this->image,
             $this->safe_space["start_x"] + $this->getlabelposition($label),
             $pos_y,
-            $this::DOT_SIZE,
-            $this::DOT_SIZE,
+            2 * $this::DOT_SIZE,
+            2 * $this::DOT_SIZE,
             $color
         );
     }
