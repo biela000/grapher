@@ -26,6 +26,7 @@ class Grapher
     private $axisy_upper_limit;
     private $axisy_bottom_limit;
     private $axsiy_step;
+    private $data_points = array();
 
     public function __construct($image_width, $image_height)
     {
@@ -90,7 +91,7 @@ class Grapher
 
         $this->drawlabelswithgrid();
 
-        $this->drawconnceteddatapoints();
+        $this->drawconnecteddatapoints();
     }
 
     private function drawbackground($background_color)
@@ -281,7 +282,7 @@ class Grapher
         imagesetstyle($this->image, $line_style_colors);
     }
 
-    private function drawconnceteddatapoints()
+    private function drawconnecteddatapoints()
     {
         $previous_label_pos = null;
         $previous_value_pos = null;
@@ -293,6 +294,7 @@ class Grapher
             $current_label_pos = $this->getlabelposition($label);
             $current_value_pos = $this->getvalueposition($value);
 
+            // Normal, Sick or Null
             $this->decidedatapointtype($label, $value);
 
             if ($this->arevaluesvalid($previous_value_pos, $current_value_pos))
@@ -307,6 +309,13 @@ class Grapher
 
             $previous_label_pos = $current_label_pos;
             $previous_value_pos = $current_value_pos;
+
+            $this->data_points[] = array(
+                "label" => $label,
+                "value" => $value,
+                "label_pos" => $current_label_pos,
+                "value_pos" => $current_value_pos
+            );
         }
     }
 
@@ -383,5 +392,10 @@ class Grapher
     public function getimage()
     {
         return $this->image;
+    }
+
+    public function getdatapoints()
+    {
+        return $this->data_points;
     }
 }
