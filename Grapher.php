@@ -10,6 +10,7 @@ class Grapher
     const VALUE_INDICATOR_SIZE = 5;
     const DOT_SIZE = 5;
     const Y_AXIS_LABEL_COUNT = 6;
+    const SPECIAL_VALUE = -1;
     private $image_width;
     private $image_height;
     private $image;
@@ -89,7 +90,7 @@ class Grapher
 
         $this->drawlabelswithgrid();
 
-        $this->drawdatapoints();
+        $this->drawconnceteddatapoints();
     }
 
     private function drawbackground($background_color)
@@ -227,7 +228,7 @@ class Grapher
     private function filterdata()
     {
         return array_filter($this->data, function($value) {
-            return count($value) > 0 && $value[0] != -1;
+            return count($value) > 0 && $value[0] != $this::SPECIAL_VALUE;
         });
     }
 
@@ -280,25 +281,59 @@ class Grapher
         imagesetstyle($this->image, $line_style_colors);
     }
 
-    private function drawdatapoints()
+    private function drawconnceteddatapoints()
     {
+        $previous_label_pos = null;
+        $previous_value_pos = null;
+
         foreach ($this->labels as $label)
         {
-            $value = isset($this->data[$label]) ? $this->data[$label] : [];
+            $value = $this->doesvalueexist($label) ? $this->data[$label][0] : null;
 
-            if (count($value) > 0)
-                $this->decidedatapointtype($label, $value[0]);
-            else
-                $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["grey"]);
+            $current_label_pos = $this->getlabelposition($label);
+            $current_value_pos = $this->getvalueposition($value);
+
+            $this->decidedatapointtype($label, $value);
+
+            if ($this->arevaluesvalid($previous_value_pos, $current_value_pos))
+            {
+                $this->drawlinebetweenpoints(
+                    $this->safe_space["start_x"] + $previous_label_pos,
+                    $this->safe_space["start_y"] - $previous_value_pos,
+                    $this->safe_space["start_x"] + $current_label_pos,
+                    $this->safe_space["start_y"] - $current_value_pos
+                );
+            }
+
+            $previous_label_pos = $current_label_pos;
+            $previous_value_pos = $current_value_pos;
         }
+    }
+
+    private function doesvalueexist($label)
+    {
+        return isset($this->data[$label]) && count($this->data[$label]) > 0;
     }
 
     private function decidedatapointtype($label, $value)
     {
-        if ($value == -1)
-            $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["red"]);
-        else
-            $this->drawdatapoint($label, $value);
+        switch ($value) {
+            case $this::SPECIAL_VALUE:
+                $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["red"]);
+                break;
+            case null:
+                $this->drawspecialdatapoint($label, $this->safe_space["start_y"], $this->colors["grey"]);
+                break;
+            default:
+                $this->drawdatapoint($label, $value);
+                break;
+        }
+    }
+
+    private function arevaluesvalid($prev_y, $curr_y)
+    {
+        return isset($prev_y) && isset($curr_y) &&
+            $prev_y != $this->safe_space["start_y"] && $curr_y != $this->safe_space["start_y"];
     }
 
     private function drawdatapoint($label, $value)
@@ -333,7 +368,16 @@ class Grapher
 
     private function getvalueposition($value)
     {
+        if ($value == null || $value == $this::SPECIAL_VALUE) {
+            return $this->safe_space["start_y"];
+        }
+
         return $this->distance_between_axisy_labels * (abs($this->axisy_bottom_limit - $value) / $this->axsiy_step + 1);
+    }
+
+    private function drawlinebetweenpoints($x1, $y1, $x2, $y2)
+    {
+        $this->drawline($x1, $y1, $x2, $y2, $this->colors["blue"]);
     }
 
     public function getimage()
