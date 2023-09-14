@@ -209,8 +209,10 @@ class Grapher
 
     private function calculateaxisyproperties()
     {
-        $this->axisy_upper_limit = doubleval(ceil(max(array_map("max", $this->data))) / 10 * 10);
-        $this->axisy_bottom_limit = doubleval(ceil(min(array_map("min", $this->data))) / 10 * 10);
+        $filtered_data = $this->filterdata();
+
+        $this->axisy_upper_limit = $this->calculateupperlimit($filtered_data);
+        $this->axisy_bottom_limit = $this->calculatebottomlimit($filtered_data);
 
         $this->axsiy_step = ($this->axisy_upper_limit - $this->axisy_bottom_limit) / ($this::Y_AXIS_LABEL_COUNT - 1);
 
@@ -220,6 +222,23 @@ class Grapher
             "x" => $this->safe_space["start_x"] - 10 * $this::LABEL_FONT_SIZE,
             "y" => $this->safe_space["start_y"] - $this->distance_between_axisy_labels,
         );
+    }
+
+    private function filterdata()
+    {
+        return array_filter($this->data, function($value) {
+            return count($value) > 0 && $value[0] != -1;
+        });
+    }
+
+    private function calculateupperlimit($data)
+    {
+        return doubleval(ceil(max(array_map("max", $data))) / 10 * 10);
+    }
+
+    private function calculatebottomlimit($data)
+    {
+        return doubleval(ceil(min(array_map("min", $data))) / 10 * 10);
     }
 
     private function drawlabel($label_x, $label_y, $start_x, $start_y, $end_x, $end_y, $value)
