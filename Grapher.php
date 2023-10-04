@@ -313,8 +313,8 @@ class Grapher
             $this->data_points[] = array(
                 "label" => $label,
                 "value" => $value,
-                "label_pos" => $current_label_pos,
-                "value_pos" => $current_value_pos
+                "label_pos" => $this->safe_space["start_x"] + $current_label_pos,
+                "value_pos" => $this->safe_space["start_y"] - $current_value_pos
             );
         }
     }
@@ -342,7 +342,7 @@ class Grapher
     private function arevaluesvalid($prev_y, $curr_y)
     {
         return isset($prev_y) && isset($curr_y) &&
-            $prev_y != $this->safe_space["start_y"] && $curr_y != $this->safe_space["start_y"];
+            $prev_y != 0 && $curr_y != 0;
     }
 
     private function drawdatapoint($label, $value)
@@ -378,7 +378,7 @@ class Grapher
     private function getvalueposition($value)
     {
         if ($value == null || $value == $this::SPECIAL_VALUE) {
-            return $this->safe_space["start_y"];
+            return 0;
         }
 
         return $this->distance_between_axisy_labels * (abs($this->axisy_bottom_limit - $value) / $this->axsiy_step + 1);
